@@ -9,8 +9,8 @@
     "react-scripts": "^5.0.0"
   },
   "scripts": {
-    "start": "./config.sh && react-scripts start",
-    "build": "./config.sh && react-scripts build",
+    "start": "node config.js && react-scripts start",
+    "build": "node config.js && react-scripts build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
