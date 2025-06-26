@@ -2,7 +2,8 @@ const crypto = require("crypto");
 
 const REFRESH_SECONDS = 120
 
-let etagValue = null
+// Replace global etagValue with a Map to store ETags per resource path
+const etagValues = new Map();
 
 let etagCalled = new Date()
 let value = etagCalled.getMinutes()
@@ -26,8 +27,12 @@ function etagPreHook (req, reply, done) {
 
   let ifNoneMatch = req.headers['if-none-match']
   let ifMatch = req.headers['if-match']
+  
+  // Get resource-specific ETag using the request URL as the key
+  const resourcePath = req.url;
+  const resourceEtag = etagValues.get(resourcePath);
 
-  if (etagValue != null && ifNoneMatch && ifNoneMatch === etagValue) {
+  if (resourceEtag != null && ifNoneMatch && ifNoneMatch === resourceEtag) {
     reply.code(304)
     newPayload = ''
   }
@@ -39,7 +44,7 @@ function etagPreHook (req, reply, done) {
     return
   }
 
-  if (etagValue != null && ifMatch && ifMatch !== etagValue) {
+  if (resourceEtag != null && ifMatch && ifMatch !== resourceEtag) {
     reply.code(412)
     newPayload = ''
     reply.send(newPayload)
@@ -63,7 +68,11 @@ function etagOnSendHook (req, reply, payload, done) {
 
     if (reply.statusCode < 400) {
       etag = hash(payload)
-      etagValue = etag
+      
+      // Store ETag in the Map using the request URL as the key
+      const resourcePath = req.url;
+      etagValues.set(resourcePath, etag)
+      
       reply.header('etag', etag)
     }
   }
