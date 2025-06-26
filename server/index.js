@@ -6,6 +6,20 @@ const app = fastify({ logger: true })
 
 app.register(require('./etag'), { prefix: '/etag' })
 
+// Function to sanitize user input to prevent XSS attacks
+function sanitizeInput(input) {
+  if (typeof input !== 'string') return input;
+  
+  // Replace potentially dangerous characters with their HTML entities
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/\//g, '&#x2F;');
+}
+
 app.route({
   method: 'GET',
   url: '/greet',
@@ -29,8 +43,9 @@ app.route({
     }
   },
   handler: function (request, reply) {
-    const greeting = request.query.greeting ? request.query.greeting : 'Hello'
-    const name = request.query.name
+    // Sanitize user input to prevent XSS attacks
+    const greeting = sanitizeInput(request.query.greeting ? request.query.greeting : 'Hello')
+    const name = sanitizeInput(request.query.name)
     let message = greeting + ' ' + name + '!'
     if (request.query.excited) {
       message = message.toUpperCase() + '!!'
