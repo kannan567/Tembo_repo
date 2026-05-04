@@ -1,0 +1,26 @@
+name: Claude Routine from Issue
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  fire-routine:
+    if: github.event.label.name == 'claude-implement'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fire Claude routine
+        run: |
+          payload=$(cat <<EOF
+          {
+            "text": "Issue #${{ github.event.issue.number }}\nTitle: ${{ github.event.issue.title }}\nBody:\n${{ github.event.issue.body }}\nRepo: ${{ github.repository }}\nPlease implement this issue and open a draft PR. Include 'Fixes #${{ github.event.issue.number }}' in PR description."
+          }
+          EOF
+          )
+
+          curl -sS -X POST "${{ secrets.CLAUDE_ROUTINE_FIRE_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.CLAUDE_ROUTINE_TOKEN }}" \
+            -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "Content-Type: application/json" \
+            -d "$payload"
